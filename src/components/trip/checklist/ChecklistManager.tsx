@@ -41,17 +41,20 @@ type ChecklistManagerProps = {
   checklistData: ChecklistData;
   participants: Participant[];
   currentUser: string;
-  className?: string; // Added this optional prop to fix the TypeScript error
+  className?: string;
 };
 
 export function ChecklistManager({ checklistData, participants, currentUser, className }: ChecklistManagerProps) {
-  const [categories, setCategories] = useState(checklistData.categories);
+  // Add checks for undefined data and provide defaults
+  const safeChecklistData = checklistData || { categories: [] };
+  
+  const [categories, setCategories] = useState(safeChecklistData.categories);
   const [isAddItemOpen, setIsAddItemOpen] = useState(false);
   const [isAddCategoryOpen, setIsAddCategoryOpen] = useState(false);
   const [newItemText, setNewItemText] = useState("");
-  const [newItemAssigned, setNewItemAssigned] = useState<string>("all");
-  const [newItemCategory, setNewItemCategory] = useState<string>(categories[0]?.id || "");
   const [newCategoryName, setNewCategoryName] = useState("");
+  const [newItemAssigned, setNewItemAssigned] = useState<string>("all");
+  const [newItemCategory, setNewItemCategory] = useState<string>(categories.length > 0 ? categories[0].id : "");
   const [filter, setFilter] = useState<string>("all"); // all, mine, completed, uncompleted
   const [searchTerm, setSearchTerm] = useState("");
   const { toast } = useToast();
@@ -547,3 +550,4 @@ export function ChecklistManager({ checklistData, participants, currentUser, cla
     </div>
   );
 }
+
