@@ -865,6 +865,7 @@ export default function TripDetail() {
                 checklistData={mockChecklistData} 
                 participants={participants} 
                 currentUser={currentUserId}
+                className="space-y-6"
               />
             </TabsContent>
             
