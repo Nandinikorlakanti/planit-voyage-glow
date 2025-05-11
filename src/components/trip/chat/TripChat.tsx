@@ -36,11 +36,34 @@ type Participant = {
   isActive?: boolean;
 };
 
+type Poll = {
+  id: string;
+  title: string;
+  createdBy: string;
+  creatorName: string;
+  deadline: string;
+  options: Array<{
+    id: string;
+    text: string;
+    votes: string[];
+  }>;
+};
+
+type Announcement = {
+  id: string;
+  title: string;
+  content: string;
+  createdBy: string;
+  creatorName: string;
+  timestamp: string;
+  readBy: string[];
+};
+
 type TripChatProps = {
   chatData: {
     messages: Message[];
-    polls?: any[];
-    announcements?: any[];
+    polls?: Poll[];
+    announcements?: Announcement[];
   };
   currentUser: string;
   participants: Participant[];

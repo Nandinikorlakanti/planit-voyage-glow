@@ -839,10 +839,22 @@ export default function TripDetail() {
             <TabsContent value="chat" className="space-y-6">
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2">
-                  <TripChat messages={chatData.messages} currentUser={currentUserId} />
+                  <TripChat 
+                    chatData={{
+                      messages: chatData.messages,
+                      polls: chatData.polls,
+                      announcements: chatData.announcements
+                    }} 
+                    currentUser={currentUserId}
+                    participants={participants}
+                  />
                 </div>
                 <div>
-                  <TripPolls polls={chatData.polls} announcements={chatData.announcements} currentUser={currentUserId} />
+                  <TripPolls
+                    polls={chatData.polls}
+                    announcements={chatData.announcements}
+                    currentUser={currentUserId}
+                  />
                 </div>
               </div>
             </TabsContent>
@@ -858,7 +870,10 @@ export default function TripDetail() {
             
             {/* Documents Tab Content */}
             <TabsContent value="documents" className="space-y-6">
-              <DocumentRepository documentData={mockDocumentData} currentUser={currentUserId} />
+              <DocumentRepository
+                documentData={mockDocumentData}
+                currentUser={currentUserId}
+              />
             </TabsContent>
             
             {/* Travel Info Tab Content */}
