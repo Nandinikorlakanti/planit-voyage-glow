@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { PageTransition } from "@/components/layout/PageTransition";
@@ -36,7 +37,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { 
-  Calendar, 
+  Calendar as CalendarIcon, 
   MapPin, 
   Users, 
   Share2, 
@@ -59,7 +60,7 @@ import { TripProps } from "@/components/trips/TripCard";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
-import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import { Calendar } from "@/components/ui/calendar";
 
 // Mock trip data
 const mockTrips: Record<string, TripProps> = {
@@ -373,7 +374,7 @@ export default function TripDetail() {
                 </h1>
                 <div className="flex flex-wrap items-center gap-4 text-white/90">
                   <div className="flex items-center">
-                    <Calendar className="mr-1.5 h-4 w-4" />
+                    <CalendarIcon className="mr-1.5 h-4 w-4" />
                     <span>{formatDate(trip.startDate)} - {formatDate(trip.endDate)}</span>
                   </div>
                   <div className="flex items-center">
@@ -581,12 +582,12 @@ export default function TripDetail() {
                                   variant="outline"
                                   className="w-full justify-start text-left font-normal"
                                 >
-                                  <Calendar className="mr-2 h-4 w-4" />
+                                  <CalendarIcon className="mr-2 h-4 w-4" />
                                   <span>Pick a date</span>
                                 </Button>
                               </PopoverTrigger>
                               <PopoverContent className="w-auto p-0">
-                                <CalendarComponent className="pointer-events-auto" />
+                                <Calendar className="pointer-events-auto" />
                               </PopoverContent>
                             </Popover>
                           </div>
@@ -680,7 +681,7 @@ export default function TripDetail() {
                       onClick={() => setSelectedDay(day)}
                       className="whitespace-nowrap"
                     >
-                      <Calendar className="mr-2 h-4 w-4" />
+                      <CalendarIcon className="mr-2 h-4 w-4" />
                       Day {index + 1} ({new Date(day).toLocaleDateString("en-US", { month: "short", day: "numeric" })})
                     </Button>
                   ))}
@@ -796,4 +797,128 @@ export default function TripDetail() {
                         ))
                       ) : (
                         <div className="text-center py-12">
-                          <div className="bg-muted inline-flex items-center justify-center p-4 rounded-full
+                          <div className="bg-muted inline-flex items-center justify-center p-4 rounded-full mb-4">
+                            <CalendarIcon className="h-6 w-6 text-muted-foreground" />
+                          </div>
+                          <h3 className="text-lg font-medium mb-2">No Activities Yet</h3>
+                          <p className="text-muted-foreground max-w-md mx-auto mb-6">
+                            There are no activities planned for this day. Click the button below to add your first activity.
+                          </p>
+                          <Button onClick={() => setIsActivityModalOpen(true)}>
+                            <Plus className="mr-2 h-4 w-4" />
+                            Add Activity
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </TabsContent>
+            
+            {/* Participants Tab */}
+            <TabsContent value="participants">
+              <div className="border rounded-lg p-6 bg-card">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="font-heading text-xl font-semibold">Trip Participants</h2>
+                  <Button onClick={() => setIsInviteModalOpen(true)}>
+                    <UserPlus className="mr-2 h-4 w-4" />
+                    Invite People
+                  </Button>
+                </div>
+                
+                <div className="grid grid-cols-1 gap-4">
+                  {participants.map(participant => (
+                    <div
+                      key={participant.id}
+                      className="flex items-center justify-between p-4 border rounded-lg"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-sm font-medium">
+                          {participant.avatar}
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium">{participant.name}</span>
+                            {participant.isCreator && (
+                              <Badge variant="outline" className="text-xs">Creator</Badge>
+                            )}
+                            {participant.isActive ? (
+                              <span className="flex items-center">
+                                <span className="h-2 w-2 bg-green-500 rounded-full mr-1.5"></span>
+                                <span className="text-xs text-muted-foreground">Active now</span>
+                              </span>
+                            ) : (
+                              <span className="flex items-center">
+                                <span className="h-2 w-2 bg-gray-300 rounded-full mr-1.5"></span>
+                                <span className="text-xs text-muted-foreground">Offline</span>
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-sm text-muted-foreground">{participant.email}</div>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <div className="text-sm text-muted-foreground">
+                          <span className="font-medium">{participant.contributionCount}</span> contributions
+                        </div>
+                        {!participant.isCreator && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleRemoveParticipant(participant.id)}
+                            className="text-destructive hover:text-destructive"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                            <span className="sr-only">Remove</span>
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </TabsContent>
+            
+            {/* Budget Tab Placeholder */}
+            <TabsContent value="budget">
+              <div className="border rounded-lg p-6 bg-card">
+                <h2 className="font-heading text-xl font-semibold mb-6">Trip Budget</h2>
+                <div className="text-center p-12 text-muted-foreground">
+                  <DollarSign className="h-12 w-12 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium mb-2">Budget Tracking Coming Soon</h3>
+                  <p className="max-w-md mx-auto">
+                    Track shared expenses, split costs between participants, and keep your trip on budget with our upcoming budget tracking feature.
+                  </p>
+                </div>
+              </div>
+            </TabsContent>
+            
+            {/* Chat Tab Placeholder */}
+            <TabsContent value="chat">
+              <div className="border rounded-lg p-6 bg-card h-[400px] flex flex-col">
+                <h2 className="font-heading text-xl font-semibold mb-6">Trip Chat</h2>
+                
+                <div className="flex-1 overflow-y-auto mb-4 flex flex-col items-center justify-center text-center">
+                  <MessageCircle className="h-12 w-12 text-muted-foreground mb-4" />
+                  <h3 className="text-lg font-medium mb-2">Chat Coming Soon</h3>
+                  <p className="text-muted-foreground max-w-md">
+                    Stay connected with your travel companions and discuss trip details in real-time with our upcoming chat feature.
+                  </p>
+                </div>
+                
+                <div className="flex gap-2">
+                  <Input placeholder="Type your message..." disabled />
+                  <Button disabled>
+                    <Send className="h-4 w-4 mr-2" />
+                    Send
+                  </Button>
+                </div>
+              </div>
+            </TabsContent>
+          </Tabs>
+        </div>
+      </div>
+    </PageTransition>
+  );
+}
