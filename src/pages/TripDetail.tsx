@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { PageTransition } from "@/components/layout/PageTransition";
@@ -8,6 +9,33 @@ import {
   TabsList, 
   TabsTrigger 
 } from "@/components/ui/tabs";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { 
   Calendar, 
   MapPin, 
@@ -16,10 +44,24 @@ import {
   Settings, 
   DollarSign,
   MessageCircle,
-  ClipboardCheck
+  ClipboardCheck,
+  Plus,
+  Clock,
+  Calendar as CalendarIcon,
+  Search,
+  UserPlus,
+  Activity,
+  ThumbsUp,
+  ThumbsDown,
+  Edit,
+  Trash2,
+  Send
 } from "lucide-react";
 import { TripProps } from "@/components/trips/TripCard";
 import { useToast } from "@/hooks/use-toast";
+import { Badge } from "@/components/ui/badge";
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
+import { CalendarIcon as CalendarIconUi } from "@/components/ui/calendar";
 
 // Mock trip data
 const mockTrips: Record<string, TripProps> = {
@@ -58,11 +100,95 @@ const mockTrips: Record<string, TripProps> = {
   },
 };
 
+// Activity categories with their visual properties
+const activityCategories = [
+  { id: "adventure", name: "Adventure", icon: Activity, color: "bg-orange-500" },
+  { id: "food", name: "Food", icon: DollarSign, color: "bg-green-500" },
+  { id: "sightseeing", name: "Sightseeing", icon: MapPin, color: "bg-blue-500" },
+  { id: "transportation", name: "Transportation", icon: Activity, color: "bg-purple-500" },
+  { id: "accommodation", name: "Accommodation", icon: Activity, color: "bg-amber-500" },
+  { id: "other", name: "Other", icon: Activity, color: "bg-gray-500" },
+];
+
+// Mock activities data
+const mockActivities = [
+  {
+    id: "activity-1",
+    title: "Visit the Colosseum",
+    date: "2025-06-16",
+    startTime: "10:00",
+    endTime: "12:00",
+    duration: "2 hours",
+    category: "sightseeing",
+    location: "Piazza del Colosseo, Rome",
+    cost: 16,
+    notes: "Remember to book tickets in advance to skip the line.",
+    images: ["https://images.unsplash.com/photo-1552832230-c0197dd311b5?q=80&w=1600&auto=format&fit=crop"],
+    createdBy: "user-1",
+    creatorName: "Jane Smith",
+    upvotes: 3,
+    downvotes: 0,
+    status: "confirmed" // confirmed, suggested, declined
+  },
+  {
+    id: "activity-2",
+    title: "Pizza Making Class",
+    date: "2025-06-17",
+    startTime: "18:00",
+    endTime: "21:00",
+    duration: "3 hours",
+    category: "food",
+    location: "Via del Corso 12, Rome",
+    cost: 45,
+    notes: "Authentic Italian pizza making experience with local chefs.",
+    images: ["https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?q=80&w=1600&auto=format&fit=crop"],
+    createdBy: "user-2",
+    creatorName: "Alex Rodriguez",
+    upvotes: 4,
+    downvotes: 0,
+    status: "suggested"
+  },
+  {
+    id: "activity-3",
+    title: "Vatican Museums Tour",
+    date: "2025-06-18",
+    startTime: "09:00",
+    endTime: "13:00",
+    duration: "4 hours",
+    category: "sightseeing",
+    location: "Vatican City",
+    cost: 25,
+    notes: "Guided tour includes Sistine Chapel and St. Peter's Basilica.",
+    images: ["https://images.unsplash.com/photo-1531572753322-ad063cecc140?q=80&w=1600&auto=format&fit=crop"],
+    createdBy: "user-1",
+    creatorName: "Jane Smith",
+    upvotes: 2,
+    downvotes: 1,
+    status: "confirmed"
+  }
+];
+
+// Mock participants data
+const mockParticipants = [
+  { id: "user-1", name: "Jane Smith", email: "jane@example.com", avatar: "JS", isCreator: true, isActive: true, contributionCount: 5 },
+  { id: "user-2", name: "Alex Rodriguez", email: "alex@example.com", avatar: "AR", isCreator: false, isActive: true, contributionCount: 3 },
+  { id: "user-3", name: "Taylor Moore", email: "taylor@example.com", avatar: "TM", isCreator: false, isActive: false, contributionCount: 1 },
+];
+
 export default function TripDetail() {
   const { id } = useParams<{ id: string }>();
   const [trip, setTrip] = useState<TripProps | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [shareCode, setShareCode] = useState("TRIP1234");
+  const [activities, setActivities] = useState(mockActivities);
+  const [participants, setParticipants] = useState(mockParticipants);
+  const [activeParticipants, setActiveParticipants] = useState(["user-1", "user-2"]);
+  const [selectedDay, setSelectedDay] = useState("");
+  const [isActivityModalOpen, setIsActivityModalOpen] = useState(false);
+  const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteMessage, setInviteMessage] = useState("");
+  const [invitePermission, setInvitePermission] = useState("editor");
   const { toast } = useToast();
   
   useEffect(() => {
@@ -70,6 +196,10 @@ export default function TripDetail() {
     setTimeout(() => {
       if (id && mockTrips[id]) {
         setTrip(mockTrips[id]);
+        // Set the first day of the trip as the selected day
+        if (mockTrips[id].startDate) {
+          setSelectedDay(mockTrips[id].startDate);
+        }
       }
       setIsLoading(false);
     }, 800);
@@ -83,10 +213,104 @@ export default function TripDetail() {
     });
   };
   
+  const handleInviteSubmit = () => {
+    if (!inviteEmail.trim()) {
+      toast({
+        title: "Email required",
+        description: "Please enter an email address to send the invitation.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    // Simulate sending invitation
+    toast({
+      title: "Invitation sent!",
+      description: `Invitation sent to ${inviteEmail}. They'll receive a link to join the trip.`
+    });
+    
+    setInviteEmail("");
+    setInviteMessage("");
+    setIsInviteModalOpen(false);
+  };
+  
+  const handleRemoveParticipant = (userId: string) => {
+    const participantToRemove = participants.find(p => p.id === userId);
+    if (!participantToRemove) return;
+    
+    setParticipants(participants.filter(p => p.id !== userId));
+    
+    toast({
+      title: "Participant removed",
+      description: `${participantToRemove.name} has been removed from this trip.`
+    });
+  };
+  
+  const handleActivityVote = (activityId: string, voteType: 'up' | 'down') => {
+    setActivities(activities.map(activity => {
+      if (activity.id === activityId) {
+        if (voteType === 'up') {
+          return { ...activity, upvotes: activity.upvotes + 1 };
+        } else {
+          return { ...activity, downvotes: activity.downvotes + 1 };
+        }
+      }
+      return activity;
+    }));
+    
+    toast({
+      title: `Vote recorded`,
+      description: `Your vote has been added.`
+    });
+  };
+  
+  const handleDeleteActivity = (activityId: string) => {
+    setActivities(activities.filter(activity => activity.id !== activityId));
+    
+    toast({
+      title: "Activity deleted",
+      description: "The activity has been removed from this trip."
+    });
+  };
+  
+  const handleConfirmActivity = (activityId: string) => {
+    setActivities(activities.map(activity => {
+      if (activity.id === activityId) {
+        return { ...activity, status: activity.status === "confirmed" ? "suggested" : "confirmed" };
+      }
+      return activity;
+    }));
+    
+    toast({
+      title: "Activity status updated",
+      description: "The activity status has been updated."
+    });
+  };
+  
   // Format dates
   const formatDate = (dateString: string): string => {
     const date = new Date(dateString);
     return date.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+  };
+  
+  // Get activities for a specific day
+  const getDayActivities = (date: string) => {
+    return activities.filter(activity => activity.date === date);
+  };
+  
+  // Generate an array of dates between start and end dates
+  const getTripDays = () => {
+    if (!trip) return [];
+    
+    const start = new Date(trip.startDate);
+    const end = new Date(trip.endDate);
+    const days = [];
+    
+    for (let day = new Date(start); day <= end; day.setDate(day.getDate() + 1)) {
+      days.push(new Date(day).toISOString().split('T')[0]);
+    }
+    
+    return days;
   };
   
   if (isLoading) {
@@ -166,6 +390,88 @@ export default function TripDetail() {
               </div>
               
               <div className="flex gap-2">
+                <Dialog open={isInviteModalOpen} onOpenChange={setIsInviteModalOpen}>
+                  <DialogTrigger asChild>
+                    <Button variant="secondary" size="sm" className="bg-white/20 backdrop-blur-sm hover:bg-white/30">
+                      <UserPlus className="mr-2 h-4 w-4" />
+                      Invite
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                      <DialogTitle>Invite Travelers</DialogTitle>
+                      <DialogDescription>
+                        Send invitations to friends and family to join this trip.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                      <div className="grid gap-2">
+                        <label htmlFor="email" className="text-sm font-medium">
+                          Email address
+                        </label>
+                        <Input
+                          id="email"
+                          placeholder="name@example.com"
+                          type="email"
+                          value={inviteEmail}
+                          onChange={(e) => setInviteEmail(e.target.value)}
+                        />
+                      </div>
+                      <div className="grid gap-2">
+                        <label htmlFor="permission" className="text-sm font-medium">
+                          Permission level
+                        </label>
+                        <select 
+                          id="permission"
+                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                          value={invitePermission}
+                          onChange={(e) => setInvitePermission(e.target.value)}
+                        >
+                          <option value="editor">Editor (can add and edit activities)</option>
+                          <option value="viewer">Viewer (can only view trip details)</option>
+                        </select>
+                      </div>
+                      <div className="grid gap-2">
+                        <label htmlFor="message" className="text-sm font-medium">
+                          Custom message (optional)
+                        </label>
+                        <Textarea
+                          id="message"
+                          placeholder="Hey! Join me on this trip..."
+                          value={inviteMessage}
+                          onChange={(e) => setInviteMessage(e.target.value)}
+                        />
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <div className="grid flex-1 gap-2">
+                          <label htmlFor="code" className="text-sm font-medium">
+                            Or share trip code
+                          </label>
+                          <div className="flex">
+                            <Input
+                              id="code"
+                              value={shareCode}
+                              readOnly
+                              className="rounded-r-none font-mono"
+                            />
+                            <Button 
+                              onClick={handleCopyCode} 
+                              className="rounded-l-none"
+                              variant="secondary"
+                            >
+                              Copy
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <DialogFooter className="sm:justify-start">
+                      <Button type="button" onClick={handleInviteSubmit}>
+                        Send Invitation
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
                 <Button variant="secondary" size="sm" className="bg-white/20 backdrop-blur-sm hover:bg-white/30">
                   <Settings className="mr-2 h-4 w-4" />
                   Edit Trip
@@ -196,6 +502,28 @@ export default function TripDetail() {
             <p className="text-muted-foreground mb-8">{trip.description}</p>
           )}
           
+          {/* Active Participants Indicator */}
+          <div className="mb-6 flex items-center gap-2">
+            <span className="text-sm text-muted-foreground mr-2">Currently viewing:</span>
+            <div className="flex -space-x-2">
+              {participants
+                .filter(p => activeParticipants.includes(p.id))
+                .map(participant => (
+                  <div 
+                    key={participant.id}
+                    className="h-8 w-8 rounded-full bg-primary/10 border-2 border-background flex items-center justify-center text-xs font-medium"
+                    title={participant.name}
+                  >
+                    {participant.avatar}
+                  </div>
+                ))
+              }
+            </div>
+            <span className="text-xs text-muted-foreground">
+              {activeParticipants.length} active
+            </span>
+          </div>
+          
           {/* Tab Navigation */}
           <Tabs defaultValue="itinerary" className="space-y-8">
             <TabsList className="w-full sm:w-auto">
@@ -220,22 +548,271 @@ export default function TripDetail() {
             {/* Itinerary Tab */}
             <TabsContent value="itinerary">
               <div className="border rounded-lg p-6 bg-card">
-                <h2 className="font-heading text-xl font-semibold mb-4">Trip Itinerary</h2>
-                <p className="text-muted-foreground mb-6">
-                  Plan your daily activities and events for this trip.
-                </p>
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="font-heading text-xl font-semibold">Trip Itinerary</h2>
+                  <Dialog open={isActivityModalOpen} onOpenChange={setIsActivityModalOpen}>
+                    <DialogTrigger asChild>
+                      <Button>
+                        <Plus className="mr-2 h-4 w-4" />
+                        Add Activity
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-md">
+                      <DialogHeader>
+                        <DialogTitle>Create New Activity</DialogTitle>
+                        <DialogDescription>
+                          Add details about the activity you want to plan.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="grid gap-4 py-4">
+                        <div className="grid gap-2">
+                          <label htmlFor="title" className="text-sm font-medium">
+                            Activity Title
+                          </label>
+                          <Input id="title" placeholder="e.g. Visit the Eiffel Tower" />
+                        </div>
+                        
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="grid gap-2">
+                            <label htmlFor="date" className="text-sm font-medium">
+                              Date
+                            </label>
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  className="w-full justify-start text-left font-normal"
+                                >
+                                  <CalendarIconUi className="mr-2 h-4 w-4" />
+                                  <span>Pick a date</span>
+                                </Button>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-auto p-0">
+                                <Calendar />
+                              </PopoverContent>
+                            </Popover>
+                          </div>
+                          <div className="grid gap-2">
+                            <label htmlFor="time" className="text-sm font-medium">
+                              Start Time
+                            </label>
+                            <Input
+                              id="time"
+                              type="time"
+                              defaultValue="09:00"
+                            />
+                          </div>
+                        </div>
+                        
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="grid gap-2">
+                            <label htmlFor="duration" className="text-sm font-medium">
+                              Duration
+                            </label>
+                            <div className="flex items-center">
+                              <Input
+                                id="duration"
+                                type="number"
+                                min="1"
+                                defaultValue="2"
+                              />
+                              <span className="ml-2 text-sm">hours</span>
+                            </div>
+                          </div>
+                          <div className="grid gap-2">
+                            <label htmlFor="category" className="text-sm font-medium">
+                              Category
+                            </label>
+                            <select 
+                              id="category"
+                              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                            >
+                              {activityCategories.map(category => (
+                                <option key={category.id} value={category.id}>
+                                  {category.name}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                        </div>
+                        
+                        <div className="grid gap-2">
+                          <label htmlFor="location" className="text-sm font-medium">
+                            Location
+                          </label>
+                          <Input id="location" placeholder="Address or place name" />
+                        </div>
+                        
+                        <div className="grid gap-2">
+                          <label htmlFor="cost" className="text-sm font-medium">
+                            Cost per person (optional)
+                          </label>
+                          <div className="relative">
+                            <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                            <Input id="cost" type="number" min="0" step="0.01" className="pl-9" />
+                          </div>
+                        </div>
+                        
+                        <div className="grid gap-2">
+                          <label htmlFor="notes" className="text-sm font-medium">
+                            Notes (optional)
+                          </label>
+                          <Textarea
+                            id="notes"
+                            placeholder="Add any additional details..."
+                          />
+                        </div>
+                      </div>
+                      <DialogFooter>
+                        <Button type="button" onClick={() => setIsActivityModalOpen(false)}>
+                          Add Activity
+                        </Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
+                </div>
                 
-                {/* Placeholder content */}
-                <div className="flex flex-col gap-4">
-                  <div className="border rounded-lg p-4">
-                    <div className="font-medium">Day 1 - {formatDate(trip.startDate)}</div>
-                    <p className="text-sm text-muted-foreground">No activities planned yet</p>
-                  </div>
-                  
-                  <Button variant="outline">
-                    <Calendar className="mr-2 h-4 w-4" />
-                    Add Activity
-                  </Button>
+                {/* Day Selector */}
+                <div className="flex overflow-x-auto pb-4 mb-6 gap-2 no-scrollbar">
+                  {getTripDays().map((day, index) => (
+                    <Button
+                      key={day}
+                      variant={day === selectedDay ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setSelectedDay(day)}
+                      className="whitespace-nowrap"
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      Day {index + 1} ({new Date(day).toLocaleDateString("en-US", { month: "short", day: "numeric" })})
+                    </Button>
+                  ))}
+                </div>
+                
+                {/* Activities Timeline */}
+                <div className="space-y-6">
+                  {selectedDay && (
+                    <div className="relative">
+                      <div className="absolute left-5 top-0 bottom-0 w-0.5 bg-muted-foreground/20"></div>
+                      
+                      {getDayActivities(selectedDay).length > 0 ? (
+                        getDayActivities(selectedDay).map((activity, index) => (
+                          <div 
+                            key={activity.id} 
+                            className="relative pl-12 pb-6 group animate-fade-in"
+                            style={{ animationDelay: `${index * 100}ms` }}
+                          >
+                            <div className="absolute left-2 top-1 h-6 w-6 rounded-full flex items-center justify-center bg-white border border-primary">
+                              <span className="text-xs font-bold">{index + 1}</span>
+                            </div>
+                            
+                            <div className="border rounded-lg overflow-hidden transition-all duration-300 hover:shadow-md group-hover:border-primary/40">
+                              <div className={`px-4 py-3 flex justify-between items-center ${activityCategories.find(c => c.id === activity.category)?.color} bg-opacity-10`}>
+                                <div className="flex items-center">
+                                  <span className="font-medium text-base">{activity.title}</span>
+                                  {activity.status === "confirmed" && (
+                                    <Badge className="ml-2" variant="outline">Confirmed</Badge>
+                                  )}
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={() => handleConfirmActivity(activity.id)}>
+                                    <ClipboardCheck className="h-4 w-4" />
+                                    <span className="sr-only">Toggle confirmation</span>
+                                  </Button>
+                                  <Button size="sm" variant="ghost" className="h-8 w-8 p-0">
+                                    <Edit className="h-4 w-4" />
+                                    <span className="sr-only">Edit</span>
+                                  </Button>
+                                  <Button 
+                                    size="sm" 
+                                    variant="ghost" 
+                                    className="h-8 w-8 p-0 text-destructive" 
+                                    onClick={() => handleDeleteActivity(activity.id)}
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                    <span className="sr-only">Delete</span>
+                                  </Button>
+                                </div>
+                              </div>
+                              
+                              <div className="p-4">
+                                <div className="flex flex-col lg:flex-row lg:items-center mb-4 gap-y-2 gap-x-6">
+                                  <div className="flex items-center text-sm text-muted-foreground">
+                                    <Clock className="mr-1.5 h-3.5 w-3.5" />
+                                    <span>{activity.startTime} - {activity.endTime} ({activity.duration})</span>
+                                  </div>
+                                  <div className="flex items-center text-sm text-muted-foreground">
+                                    <MapPin className="mr-1.5 h-3.5 w-3.5" />
+                                    <span>{activity.location}</span>
+                                  </div>
+                                  {activity.cost > 0 && (
+                                    <div className="flex items-center text-sm text-muted-foreground">
+                                      <DollarSign className="mr-1.5 h-3.5 w-3.5" />
+                                      <span>${activity.cost} per person</span>
+                                    </div>
+                                  )}
+                                </div>
+                                
+                                {activity.notes && (
+                                  <p className="text-sm text-muted-foreground mb-4">{activity.notes}</p>
+                                )}
+                                
+                                {activity.images && activity.images.length > 0 && (
+                                  <div className="mb-4">
+                                    <img 
+                                      src={activity.images[0]} 
+                                      alt={activity.title} 
+                                      className="w-full h-48 object-cover rounded-md"
+                                    />
+                                  </div>
+                                )}
+                                
+                                <div className="flex items-center justify-between">
+                                  <div className="text-xs text-muted-foreground">
+                                    Added by {activity.creatorName}
+                                  </div>
+                                  
+                                  <div className="flex items-center gap-2">
+                                    <Button 
+                                      size="sm" 
+                                      variant="outline" 
+                                      className="flex gap-1.5"
+                                      onClick={() => handleActivityVote(activity.id, 'up')}
+                                    >
+                                      <ThumbsUp className="h-3.5 w-3.5" />
+                                      <span>{activity.upvotes}</span>
+                                    </Button>
+                                    <Button 
+                                      size="sm" 
+                                      variant="outline" 
+                                      className="flex gap-1.5"
+                                      onClick={() => handleActivityVote(activity.id, 'down')}
+                                    >
+                                      <ThumbsDown className="h-3.5 w-3.5" />
+                                      <span>{activity.downvotes}</span>
+                                    </Button>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="text-center py-12">
+                          <div className="bg-muted inline-flex items-center justify-center p-4 rounded-full mb-4">
+                            <Calendar className="h-6 w-6 text-muted-foreground" />
+                          </div>
+                          <h3 className="font-medium text-lg mb-2">No activities planned</h3>
+                          <p className="text-muted-foreground mb-4 max-w-md mx-auto">
+                            This day doesn't have any activities yet. Add something exciting to your itinerary!
+                          </p>
+                          <Button onClick={() => setIsActivityModalOpen(true)}>
+                            <Plus className="mr-2 h-4 w-4" />
+                            Add Activity
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             </TabsContent>
@@ -245,43 +822,64 @@ export default function TripDetail() {
               <div className="border rounded-lg p-6 bg-card">
                 <div className="flex justify-between items-center mb-6">
                   <h2 className="font-heading text-xl font-semibold">Trip Participants</h2>
-                  <Button size="sm">Invite More</Button>
+                  <Button onClick={() => setIsInviteModalOpen(true)}>
+                    <UserPlus className="mr-2 h-4 w-4" />
+                    Invite People
+                  </Button>
                 </div>
                 
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between p-3 border rounded-lg">
-                    <div className="flex items-center">
-                      <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center mr-3">
-                        <span className="font-medium text-primary">YS</span>
-                      </div>
-                      <div>
-                        <p className="font-medium">You (Organizer)</p>
-                        <p className="text-xs text-muted-foreground">you@example.com</p>
-                      </div>
-                    </div>
-                    <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full">Organizer</span>
-                  </div>
-                  
-                  {/* Other participants */}
-                  {Array.from({ length: trip.participantCount - 1 }).map((_, i) => (
-                    <div key={i} className="flex items-center justify-between p-3 border rounded-lg">
-                      <div className="flex items-center">
-                        <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center mr-3">
-                          <span className="font-medium">
-                            {["JD", "AR", "TM"][i % 3]}
-                          </span>
+                  {participants.map((participant, index) => (
+                    <Card key={participant.id} className="animate-fade-in" style={{ animationDelay: `${index * 100}ms` }}>
+                      <CardHeader className="pb-2">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className={`h-10 w-10 rounded-full ${participant.isCreator ? 'bg-primary/20' : 'bg-muted'} flex items-center justify-center`}>
+                              <span className={`font-medium ${participant.isCreator ? 'text-primary' : ''}`}>
+                                {participant.avatar}
+                              </span>
+                            </div>
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <p className="font-medium">{participant.name}</p>
+                                {participant.isCreator && (
+                                  <Badge variant="outline" className="text-xs px-1.5 py-0">Organizer</Badge>
+                                )}
+                                {activeParticipants.includes(participant.id) && (
+                                  <span className="flex h-2.5 w-2.5 rounded-full bg-green-500 ring-1 ring-white" title="Currently online"></span>
+                                )}
+                              </div>
+                              <p className="text-xs text-muted-foreground">
+                                {participant.email}
+                              </p>
+                            </div>
+                          </div>
+                          
+                          {!participant.isCreator && (
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="h-8 w-8 p-0 text-destructive"
+                              onClick={() => handleRemoveParticipant(participant.id)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                              <span className="sr-only">Remove</span>
+                            </Button>
+                          )}
                         </div>
-                        <div>
-                          <p className="font-medium">
-                            {["John Doe", "Alex Rodriguez", "Taylor Moore"][i % 3]}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            {["john@example.com", "alex@example.com", "taylor@example.com"][i % 3]}
-                          </p>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="text-sm text-muted-foreground flex items-center justify-between">
+                          <span>{participant.contributionCount} contribution{participant.contributionCount !== 1 ? 's' : ''}</span>
+                          <div className="w-32 bg-muted rounded-full h-2">
+                            <div 
+                              className="bg-primary rounded-full h-2" 
+                              style={{ width: `${(participant.contributionCount / 5) * 100}%` }}
+                            ></div>
+                          </div>
                         </div>
-                      </div>
-                      <span className="text-xs bg-muted text-muted-foreground px-2 py-1 rounded-full">Member</span>
-                    </div>
+                      </CardContent>
+                    </Card>
                   ))}
                 </div>
               </div>
@@ -317,17 +915,40 @@ export default function TripDetail() {
                 </p>
                 
                 <div className="flex flex-col gap-4">
-                  <div className="border rounded-lg p-4 h-64 flex items-center justify-center">
-                    <p className="text-muted-foreground">Chat will be available once more participants join</p>
+                  <div className="border rounded-lg p-4 h-64 flex flex-col">
+                    <div className="flex-1 overflow-y-auto space-y-4">
+                      <div className="flex items-end gap-2">
+                        <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center">
+                          <span className="font-medium text-xs">JS</span>
+                        </div>
+                        <div className="bg-muted rounded-lg p-3 max-w-[80%]">
+                          <p className="text-sm">Hey everyone! I'm excited for our trip to Rome!</p>
+                          <span className="text-xs text-muted-foreground mt-1 block">10:23 AM</span>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-end justify-end gap-2">
+                        <div className="bg-primary/10 rounded-lg p-3 max-w-[80%]">
+                          <p className="text-sm">Me too! I've already got some ideas for places to visit.</p>
+                          <span className="text-xs text-muted-foreground mt-1 block">10:25 AM</span>
+                        </div>
+                        <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                          <span className="font-medium text-primary text-xs">You</span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                   
                   <div className="flex gap-2">
-                    <input
+                    <Input
                       type="text"
                       placeholder="Type your message..."
-                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      className="flex-1"
                     />
-                    <Button>Send</Button>
+                    <Button>
+                      <Send className="h-4 w-4" />
+                      <span className="sr-only">Send</span>
+                    </Button>
                   </div>
                 </div>
               </div>
