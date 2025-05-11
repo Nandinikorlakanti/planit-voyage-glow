@@ -41,9 +41,10 @@ type ChecklistManagerProps = {
   checklistData: ChecklistData;
   participants: Participant[];
   currentUser: string;
+  className?: string; // Added this optional prop to fix the TypeScript error
 };
 
-export function ChecklistManager({ checklistData, participants, currentUser }: ChecklistManagerProps) {
+export function ChecklistManager({ checklistData, participants, currentUser, className }: ChecklistManagerProps) {
   const [categories, setCategories] = useState(checklistData.categories);
   const [isAddItemOpen, setIsAddItemOpen] = useState(false);
   const [isAddCategoryOpen, setIsAddCategoryOpen] = useState(false);
@@ -241,7 +242,7 @@ export function ChecklistManager({ checklistData, participants, currentUser }: C
   };
 
   return (
-    <div className="grid gap-6">
+    <div className={`grid gap-6 ${className || ""}`}>
       <Card>
         <CardHeader>
           <div className="flex justify-between items-center">
