@@ -580,4 +580,292 @@ export default function TripDetail() {
           <div className="container relative z-10 h-full flex flex-col justify-end pb-6">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div>
-                <h1 className="font-heading text-3xl md:text-4xl font-bold text-
+                <h1 className="font-heading text-3xl md:text-4xl font-bold text-white">
+                  {trip.name}
+                </h1>
+                <p className="text-white/80 text-lg">
+                  {formatDate(trip.startDate)} - {formatDate(trip.endDate)}
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" className="bg-white/20 hover:bg-white/30 text-white border-transparent">
+                  <Settings className="h-4 w-4 mr-2" />
+                  Settings
+                </Button>
+                <Button variant="outline" size="sm" className="bg-white/20 hover:bg-white/30 text-white border-transparent">
+                  <Share2 className="h-4 w-4 mr-2" />
+                  Share
+                </Button>
+              </div>
+            </div>
+            
+            <div className="flex flex-wrap gap-2 mt-2">
+              <Badge variant="secondary" className="bg-white/20 hover:bg-white/30 text-white">
+                <MapPin className="h-3 w-3 mr-1" />
+                {trip.location}
+              </Badge>
+              <Badge variant="secondary" className="bg-white/20 hover:bg-white/30 text-white">
+                <Users className="h-3 w-3 mr-1" />
+                {trip.participantCount} travelers
+              </Badge>
+              <Badge variant="secondary" className="bg-white/20 hover:bg-white/30 text-white capitalize">
+                {trip.status}
+              </Badge>
+            </div>
+          </div>
+        </div>
+        
+        {/* Tabs navigation */}
+        <div className="container py-6">
+          <Tabs defaultValue="itinerary" className="space-y-6">
+            <TabsList className="w-full justify-start overflow-x-auto">
+              <TabsTrigger value="itinerary">Itinerary</TabsTrigger>
+              <TabsTrigger value="budget">Budget</TabsTrigger>
+              <TabsTrigger value="chat">Communication</TabsTrigger>
+              <TabsTrigger value="checklist">Checklist</TabsTrigger>
+              <TabsTrigger value="documents">Documents</TabsTrigger>
+              <TabsTrigger value="info">Travel Info</TabsTrigger>
+              <TabsTrigger value="memories">Memories</TabsTrigger>
+            </TabsList>
+            
+            {/* Itinerary Tab Content */}
+            <TabsContent value="itinerary" className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="md:col-span-2 space-y-4">
+                  <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                      <div>
+                        <CardTitle className="text-xl">Daily Schedule</CardTitle>
+                        <CardDescription>Plan your activities by day</CardDescription>
+                      </div>
+                      <Button size="sm">
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add Activity
+                      </Button>
+                    </CardHeader>
+                    <CardContent className="pb-1">
+                      <div className="flex overflow-x-auto space-x-2 pb-4">
+                        {getTripDays().map((day) => (
+                          <Button 
+                            key={day} 
+                            variant={selectedDay === day ? "default" : "outline"} 
+                            className="flex-shrink-0"
+                            onClick={() => setSelectedDay(day)}
+                          >
+                            {new Date(day).toLocaleDateString('en-US', { weekday: 'short', day: 'numeric' })}
+                          </Button>
+                        ))}
+                      </div>
+                      
+                      {selectedDay && (
+                        <div className="space-y-4 mt-4">
+                          <h3 className="font-medium text-lg">
+                            {new Date(selectedDay).toLocaleDateString('en-US', { 
+                              weekday: 'long', 
+                              month: 'long', 
+                              day: 'numeric',
+                              year: 'numeric'
+                            })}
+                          </h3>
+                          
+                          {getDayActivities(selectedDay).length > 0 ? (
+                            getDayActivities(selectedDay).map((activity) => (
+                              <Card key={activity.id} className="relative overflow-hidden">
+                                {activity.status === "confirmed" && (
+                                  <div className="absolute top-0 right-0 bg-green-500 text-white text-xs px-2 py-1 rounded-bl">
+                                    Confirmed
+                                  </div>
+                                )}
+                                {activity.images && activity.images.length > 0 && (
+                                  <div className="h-40 overflow-hidden">
+                                    <img src={activity.images[0]} alt={activity.title} className="w-full h-full object-cover" />
+                                  </div>
+                                )}
+                                <CardHeader className={activity.images && activity.images.length > 0 ? "pt-3" : ""}>
+                                  <div className="flex justify-between items-start">
+                                    <CardTitle>{activity.title}</CardTitle>
+                                    <div className="flex space-x-2">
+                                      <Button 
+                                        variant="ghost" 
+                                        size="icon" 
+                                        onClick={() => handleConfirmActivity(activity.id)}
+                                        className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                                      >
+                                        <ChecklistManager className="h-4 w-4" />
+                                      </Button>
+                                      <Button 
+                                        variant="ghost" 
+                                        size="icon" 
+                                        className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                                      >
+                                        <Edit className="h-4 w-4" />
+                                      </Button>
+                                      <Button 
+                                        variant="ghost" 
+                                        size="icon" 
+                                        onClick={() => handleDeleteActivity(activity.id)}
+                                        className="h-8 w-8 text-muted-foreground hover:text-foreground hover:text-red-500"
+                                      >
+                                        <Trash2 className="h-4 w-4" />
+                                      </Button>
+                                    </div>
+                                  </div>
+                                  <div className="flex flex-wrap gap-2 mt-1">
+                                    <Badge variant="outline" className="flex items-center">
+                                      <Clock className="h-3 w-3 mr-1" />
+                                      {activity.startTime} - {activity.endTime}
+                                    </Badge>
+                                    <Badge variant="outline" className="flex items-center">
+                                      <MapPin className="h-3 w-3 mr-1" />
+                                      {activity.location}
+                                    </Badge>
+                                    <Badge variant="outline" className="flex items-center">
+                                      <DollarSign className="h-3 w-3 mr-1" />
+                                      ${activity.cost}
+                                    </Badge>
+                                  </div>
+                                </CardHeader>
+                                <CardContent className="pt-0">
+                                  {activity.notes && <p className="text-sm text-muted-foreground">{activity.notes}</p>}
+                                </CardContent>
+                                <CardFooter className="flex justify-between pt-0">
+                                  <div className="text-xs text-muted-foreground">
+                                    Added by {activity.creatorName}
+                                  </div>
+                                  <div className="flex space-x-2">
+                                    <Button 
+                                      variant="ghost" 
+                                      size="sm" 
+                                      onClick={() => handleActivityVote(activity.id, 'up')}
+                                      className="h-8 text-muted-foreground hover:text-green-500"
+                                    >
+                                      <ThumbsUp className="h-4 w-4 mr-1" />
+                                      {activity.upvotes}
+                                    </Button>
+                                    <Button 
+                                      variant="ghost" 
+                                      size="sm" 
+                                      onClick={() => handleActivityVote(activity.id, 'down')}
+                                      className="h-8 text-muted-foreground hover:text-red-500"
+                                    >
+                                      <ThumbsDown className="h-4 w-4 mr-1" />
+                                      {activity.downvotes}
+                                    </Button>
+                                  </div>
+                                </CardFooter>
+                              </Card>
+                            ))
+                          ) : (
+                            <div className="text-center py-12">
+                              <div className="bg-muted inline-flex items-center justify-center p-4 rounded-full mb-4">
+                                <Calendar className="h-6 w-6 text-muted-foreground" />
+                              </div>
+                              <h3 className="text-lg font-medium mb-2">No Activities Planned</h3>
+                              <p className="text-muted-foreground mb-4">
+                                There are no activities planned for this day yet.
+                              </p>
+                              <Button>
+                                <Plus className="h-4 w-4 mr-2" />
+                                Add Activity
+                              </Button>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                </div>
+                
+                <div>
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Trip Members</CardTitle>
+                      <CardDescription>
+                        People participating in this trip
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      {participants.map(participant => (
+                        <div key={participant.id} className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground">
+                              {participant.avatar}
+                            </div>
+                            <div>
+                              <p className="font-medium">{participant.name}</p>
+                              <p className="text-xs text-muted-foreground">{participant.email}</p>
+                            </div>
+                          </div>
+                          <div className="flex gap-2 items-center">
+                            {participant.isCreator && (
+                              <Badge variant="outline" className="text-xs">Creator</Badge>
+                            )}
+                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleRemoveParticipant(participant.id)}>
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                      
+                      <Button className="w-full" variant="outline" onClick={() => setIsInviteModalOpen(true)}>
+                        <UserPlus className="h-4 w-4 mr-2" />
+                        Invite People
+                      </Button>
+                    </CardContent>
+                  </Card>
+                </div>
+              </div>
+            </TabsContent>
+            
+            {/* Budget Tab Content */}
+            <TabsContent value="budget" className="space-y-6">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="lg:col-span-3">
+                  <BudgetDashboard budgetData={budgetData} />
+                </div>
+                <div className="lg:col-span-2">
+                  <BudgetExpenses expenses={budgetData.expenses} settlements={budgetData.settlements} participants={participants} />
+                </div>
+                <div>
+                  <BudgetAnalytics budgetData={budgetData} />
+                </div>
+              </div>
+            </TabsContent>
+            
+            {/* Communication Tab Content */}
+            <TabsContent value="chat" className="space-y-6">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="lg:col-span-2">
+                  <TripChat chatData={chatData.messages} participants={participants} />
+                </div>
+                <div>
+                  <TripPolls polls={chatData.polls} participants={participants} />
+                </div>
+              </div>
+            </TabsContent>
+            
+            {/* Checklist Tab Content */}
+            <TabsContent value="checklist" className="space-y-6">
+              <ChecklistManager checklistData={mockChecklistData} participants={participants} />
+            </TabsContent>
+            
+            {/* Documents Tab Content */}
+            <TabsContent value="documents" className="space-y-6">
+              <DocumentRepository documentData={mockDocumentData} participants={participants} />
+            </TabsContent>
+            
+            {/* Travel Info Tab Content */}
+            <TabsContent value="info" className="space-y-6">
+              <TravelInfo travelInfoData={mockTravelInfoData} location={trip.location} />
+            </TabsContent>
+            
+            {/* Memories Tab Content */}
+            <TabsContent value="memories" className="space-y-6">
+              <TripMemories tripId={trip.id} />
+            </TabsContent>
+          </Tabs>
+        </div>
+      </div>
+    </PageTransition>
+  );
+}
