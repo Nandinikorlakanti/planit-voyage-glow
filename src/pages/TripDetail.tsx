@@ -223,7 +223,7 @@ export const mockChatData = {
     { id: "msg-5", userId: "user-2", userName: "Alex Rodriguez", avatar: "AR", content: "Has everyone checked the weather forecast? We might need to bring umbrellas.", timestamp: "2023-04-11T09:15:00", reactions: [], attachments: [] },
     { id: "msg-6", userId: "user-1", userName: "Jane Smith", avatar: "JS", content: "Good point! I'll add umbrellas to our packing list.", timestamp: "2023-04-11T09:20:00", reactions: [{ type: "👍", users: ["user-2"] }], attachments: [] },
     { id: "msg-7", userId: "user-3", userName: "Taylor Moore", avatar: "TM", content: "Here's the restaurant I was talking about for dinner on our first night.", timestamp: "2023-04-11T13:45:00", reactions: [], attachments: [
-      { id: "att-1", type: "image", url: "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?q=80&w=500&auto=format&fit=crop", name: "restaurant.jpg" }
+      { id: "att-1", type: "image", url: "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?q=80&w=1600&auto=format&fit=crop", name: "restaurant.jpg" }
     ] }
   ],
   polls: [
@@ -400,6 +400,9 @@ export default function TripDetail() {
   
   // Communication state
   const [chatData, setChatData] = useState(mockChatData);
+  
+  // Current user ID (for components that need it)
+  const currentUserId = "user-1"; // Hardcoded for now, would come from auth system in a real app
   
   useEffect(() => {
     // Simulate API call
@@ -836,32 +839,36 @@ export default function TripDetail() {
             <TabsContent value="chat" className="space-y-6">
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2">
-                  <TripChat chatData={chatData.messages} participants={participants} />
+                  <TripChat messages={chatData.messages} currentUser={currentUserId} />
                 </div>
                 <div>
-                  <TripPolls polls={chatData.polls} participants={participants} />
+                  <TripPolls polls={chatData.polls} announcements={chatData.announcements} currentUser={currentUserId} />
                 </div>
               </div>
             </TabsContent>
             
             {/* Checklist Tab Content */}
             <TabsContent value="checklist" className="space-y-6">
-              <ChecklistManager checklistData={mockChecklistData} participants={participants} />
+              <ChecklistManager 
+                checklistData={mockChecklistData} 
+                participants={participants} 
+                currentUser={currentUserId}
+              />
             </TabsContent>
             
             {/* Documents Tab Content */}
             <TabsContent value="documents" className="space-y-6">
-              <DocumentRepository documentData={mockDocumentData} participants={participants} />
+              <DocumentRepository documentData={mockDocumentData} currentUser={currentUserId} />
             </TabsContent>
             
             {/* Travel Info Tab Content */}
             <TabsContent value="info" className="space-y-6">
-              <TravelInfo travelInfoData={mockTravelInfoData} location={trip.location} />
+              <TravelInfo travelInfo={mockTravelInfoData} trip={trip} />
             </TabsContent>
             
             {/* Memories Tab Content */}
             <TabsContent value="memories" className="space-y-6">
-              <TripMemories tripId={trip.id} />
+              <TripMemories trip={trip} />
             </TabsContent>
           </Tabs>
         </div>
