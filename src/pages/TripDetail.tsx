@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { PageTransition } from "@/components/layout/PageTransition";
@@ -47,7 +46,6 @@ import {
   ClipboardCheck,
   Plus,
   Clock,
-  Calendar as CalendarIcon,
   Search,
   UserPlus,
   Activity,
@@ -61,7 +59,7 @@ import { TripProps } from "@/components/trips/TripCard";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
-import { CalendarIcon as CalendarIconUi } from "@/components/ui/calendar";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 
 // Mock trip data
 const mockTrips: Record<string, TripProps> = {
@@ -583,12 +581,12 @@ export default function TripDetail() {
                                   variant="outline"
                                   className="w-full justify-start text-left font-normal"
                                 >
-                                  <CalendarIconUi className="mr-2 h-4 w-4" />
+                                  <Calendar className="mr-2 h-4 w-4" />
                                   <span>Pick a date</span>
                                 </Button>
                               </PopoverTrigger>
                               <PopoverContent className="w-auto p-0">
-                                <Calendar />
+                                <CalendarComponent className="pointer-events-auto" />
                               </PopoverContent>
                             </Popover>
                           </div>
@@ -682,7 +680,7 @@ export default function TripDetail() {
                       onClick={() => setSelectedDay(day)}
                       className="whitespace-nowrap"
                     >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      <Calendar className="mr-2 h-4 w-4" />
                       Day {index + 1} ({new Date(day).toLocaleDateString("en-US", { month: "short", day: "numeric" })})
                     </Button>
                   ))}
@@ -798,164 +796,4 @@ export default function TripDetail() {
                         ))
                       ) : (
                         <div className="text-center py-12">
-                          <div className="bg-muted inline-flex items-center justify-center p-4 rounded-full mb-4">
-                            <Calendar className="h-6 w-6 text-muted-foreground" />
-                          </div>
-                          <h3 className="font-medium text-lg mb-2">No activities planned</h3>
-                          <p className="text-muted-foreground mb-4 max-w-md mx-auto">
-                            This day doesn't have any activities yet. Add something exciting to your itinerary!
-                          </p>
-                          <Button onClick={() => setIsActivityModalOpen(true)}>
-                            <Plus className="mr-2 h-4 w-4" />
-                            Add Activity
-                          </Button>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </TabsContent>
-            
-            {/* Participants Tab */}
-            <TabsContent value="participants">
-              <div className="border rounded-lg p-6 bg-card">
-                <div className="flex justify-between items-center mb-6">
-                  <h2 className="font-heading text-xl font-semibold">Trip Participants</h2>
-                  <Button onClick={() => setIsInviteModalOpen(true)}>
-                    <UserPlus className="mr-2 h-4 w-4" />
-                    Invite People
-                  </Button>
-                </div>
-                
-                <div className="space-y-4">
-                  {participants.map((participant, index) => (
-                    <Card key={participant.id} className="animate-fade-in" style={{ animationDelay: `${index * 100}ms` }}>
-                      <CardHeader className="pb-2">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <div className={`h-10 w-10 rounded-full ${participant.isCreator ? 'bg-primary/20' : 'bg-muted'} flex items-center justify-center`}>
-                              <span className={`font-medium ${participant.isCreator ? 'text-primary' : ''}`}>
-                                {participant.avatar}
-                              </span>
-                            </div>
-                            <div>
-                              <div className="flex items-center gap-2">
-                                <p className="font-medium">{participant.name}</p>
-                                {participant.isCreator && (
-                                  <Badge variant="outline" className="text-xs px-1.5 py-0">Organizer</Badge>
-                                )}
-                                {activeParticipants.includes(participant.id) && (
-                                  <span className="flex h-2.5 w-2.5 rounded-full bg-green-500 ring-1 ring-white" title="Currently online"></span>
-                                )}
-                              </div>
-                              <p className="text-xs text-muted-foreground">
-                                {participant.email}
-                              </p>
-                            </div>
-                          </div>
-                          
-                          {!participant.isCreator && (
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              className="h-8 w-8 p-0 text-destructive"
-                              onClick={() => handleRemoveParticipant(participant.id)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                              <span className="sr-only">Remove</span>
-                            </Button>
-                          )}
-                        </div>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="text-sm text-muted-foreground flex items-center justify-between">
-                          <span>{participant.contributionCount} contribution{participant.contributionCount !== 1 ? 's' : ''}</span>
-                          <div className="w-32 bg-muted rounded-full h-2">
-                            <div 
-                              className="bg-primary rounded-full h-2" 
-                              style={{ width: `${(participant.contributionCount / 5) * 100}%` }}
-                            ></div>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              </div>
-            </TabsContent>
-            
-            {/* Budget Tab */}
-            <TabsContent value="budget">
-              <div className="border rounded-lg p-6 bg-card">
-                <h2 className="font-heading text-xl font-semibold mb-4">Trip Budget</h2>
-                <p className="text-muted-foreground mb-6">
-                  Track expenses and manage your trip budget.
-                </p>
-                
-                <div className="flex flex-col gap-4">
-                  <div className="border rounded-lg p-4">
-                    <p className="text-sm text-muted-foreground">No expenses added yet</p>
-                  </div>
-                  
-                  <Button variant="outline">
-                    <DollarSign className="mr-2 h-4 w-4" />
-                    Add Expense
-                  </Button>
-                </div>
-              </div>
-            </TabsContent>
-            
-            {/* Chat Tab */}
-            <TabsContent value="chat">
-              <div className="border rounded-lg p-6 bg-card">
-                <h2 className="font-heading text-xl font-semibold mb-4">Trip Chat</h2>
-                <p className="text-muted-foreground mb-6">
-                  Communicate with your trip participants.
-                </p>
-                
-                <div className="flex flex-col gap-4">
-                  <div className="border rounded-lg p-4 h-64 flex flex-col">
-                    <div className="flex-1 overflow-y-auto space-y-4">
-                      <div className="flex items-end gap-2">
-                        <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center">
-                          <span className="font-medium text-xs">JS</span>
-                        </div>
-                        <div className="bg-muted rounded-lg p-3 max-w-[80%]">
-                          <p className="text-sm">Hey everyone! I'm excited for our trip to Rome!</p>
-                          <span className="text-xs text-muted-foreground mt-1 block">10:23 AM</span>
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-end justify-end gap-2">
-                        <div className="bg-primary/10 rounded-lg p-3 max-w-[80%]">
-                          <p className="text-sm">Me too! I've already got some ideas for places to visit.</p>
-                          <span className="text-xs text-muted-foreground mt-1 block">10:25 AM</span>
-                        </div>
-                        <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-                          <span className="font-medium text-primary text-xs">You</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="flex gap-2">
-                    <Input
-                      type="text"
-                      placeholder="Type your message..."
-                      className="flex-1"
-                    />
-                    <Button>
-                      <Send className="h-4 w-4" />
-                      <span className="sr-only">Send</span>
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </TabsContent>
-          </Tabs>
-        </div>
-      </div>
-    </PageTransition>
-  );
-}
+                          <div className="bg-muted inline-flex items-center justify-center p-4 rounded-full
