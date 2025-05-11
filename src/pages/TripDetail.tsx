@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { PageTransition } from "@/components/layout/PageTransition";
@@ -61,6 +60,15 @@ import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
+import { BudgetDashboard } from "@/components/trip/budget/BudgetDashboard";
+import { BudgetExpenses } from "@/components/trip/budget/BudgetExpenses";
+import { BudgetAnalytics } from "@/components/trip/budget/BudgetAnalytics";
+import { TripChat } from "@/components/trip/chat/TripChat";
+import { TripPolls } from "@/components/trip/chat/TripPolls";
+import { ChecklistManager } from "@/components/trip/checklist/ChecklistManager";
+import { DocumentRepository } from "@/components/trip/documents/DocumentRepository";
+import { TravelInfo } from "@/components/trip/info/TravelInfo";
+import { TripMemories } from "@/components/trip/memories/TripMemories";
 
 // Mock trip data
 const mockTrips: Record<string, TripProps> = {
@@ -174,6 +182,203 @@ const mockParticipants = [
   { id: "user-3", name: "Taylor Moore", email: "taylor@example.com", avatar: "TM", isCreator: false, isActive: false, contributionCount: 1 },
 ];
 
+// Mock budget data
+export const mockBudgetData = {
+  totalBudget: 3000,
+  spentAmount: 1250,
+  categories: [
+    { name: "Accommodation", budget: 1200, spent: 800, color: "bg-blue-500" },
+    { name: "Food", budget: 600, spent: 250, color: "bg-green-500" },
+    { name: "Activities", budget: 700, spent: 150, color: "bg-orange-500" },
+    { name: "Transportation", budget: 400, spent: 50, color: "bg-purple-500" },
+    { name: "Other", budget: 100, spent: 0, color: "bg-gray-500" }
+  ],
+  expenses: [
+    { id: "exp-1", title: "Hotel Reservation", amount: 800, category: "Accommodation", paidBy: "user-1", paidByName: "Jane Smith", split: "equal", date: "2025-06-15", notes: "Two rooms for 5 nights", receipt: null },
+    { id: "exp-2", title: "Train Tickets", amount: 50, category: "Transportation", paidBy: "user-2", paidByName: "Alex Rodriguez", split: "equal", date: "2025-06-15", notes: "Round trip", receipt: null },
+    { id: "exp-3", title: "Pizza Dinner", amount: 85, category: "Food", paidBy: "user-1", paidByName: "Jane Smith", split: "equal", date: "2025-06-17", notes: "Restaurant near hotel", receipt: null },
+    { id: "exp-4", title: "Museum Tickets", amount: 60, category: "Activities", paidBy: "user-3", paidByName: "Taylor Moore", split: "equal", date: "2025-06-18", notes: "Group discount applied", receipt: null },
+    { id: "exp-5", title: "Breakfast Supplies", amount: 35, category: "Food", paidBy: "user-2", paidByName: "Alex Rodriguez", split: "equal", date: "2025-06-16", notes: "Groceries for the apartment", receipt: null },
+    { id: "exp-6", title: "City Tour", amount: 90, category: "Activities", paidBy: "user-1", paidByName: "Jane Smith", split: "equal", date: "2025-06-19", notes: "Walking tour with guide", receipt: null },
+    { id: "exp-7", title: "Taxi from Airport", amount: 50, category: "Transportation", paidBy: "user-3", paidByName: "Taylor Moore", split: "custom", splitDetails: [
+      { userId: "user-1", amount: 20 }, 
+      { userId: "user-2", amount: 20 }, 
+      { userId: "user-3", amount: 10 }
+    ], date: "2025-06-15", notes: "Airport to hotel", receipt: null }
+  ],
+  settlements: [
+    { from: "user-2", to: "user-1", amount: 120, fromName: "Alex Rodriguez", toName: "Jane Smith" },
+    { from: "user-3", to: "user-1", amount: 85, fromName: "Taylor Moore", toName: "Jane Smith" },
+    { from: "user-1", to: "user-3", amount: 35, fromName: "Jane Smith", toName: "Taylor Moore" }
+  ]
+};
+
+// Mock chat data
+export const mockChatData = {
+  messages: [
+    { id: "msg-1", userId: "user-1", userName: "Jane Smith", avatar: "JS", content: "Hey everyone! I've booked the hotel rooms for our trip.", timestamp: "2023-04-10T14:30:00", reactions: [{ type: "👍", users: ["user-2", "user-3"] }], attachments: [] },
+    { id: "msg-2", userId: "user-2", userName: "Alex Rodriguez", avatar: "AR", content: "Great! Should we start planning the activities?", timestamp: "2023-04-10T14:32:00", reactions: [], attachments: [] },
+    { id: "msg-3", userId: "user-1", userName: "Jane Smith", avatar: "JS", content: "Yes! I've added a few suggestions to the itinerary. Please check them out and vote.", timestamp: "2023-04-10T14:35:00", reactions: [], attachments: [] },
+    { id: "msg-4", userId: "user-3", userName: "Taylor Moore", avatar: "TM", content: "I'm excited for the museum tour! I've heard it's amazing.", timestamp: "2023-04-10T15:05:00", reactions: [{ type: "❤️", users: ["user-1"] }], attachments: [] },
+    { id: "msg-5", userId: "user-2", userName: "Alex Rodriguez", avatar: "AR", content: "Has everyone checked the weather forecast? We might need to bring umbrellas.", timestamp: "2023-04-11T09:15:00", reactions: [], attachments: [] },
+    { id: "msg-6", userId: "user-1", userName: "Jane Smith", avatar: "JS", content: "Good point! I'll add umbrellas to our packing list.", timestamp: "2023-04-11T09:20:00", reactions: [{ type: "👍", users: ["user-2"] }], attachments: [] },
+    { id: "msg-7", userId: "user-3", userName: "Taylor Moore", avatar: "TM", content: "Here's the restaurant I was talking about for dinner on our first night.", timestamp: "2023-04-11T13:45:00", reactions: [], attachments: [
+      { id: "att-1", type: "image", url: "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?q=80&w=500&auto=format&fit=crop", name: "restaurant.jpg" }
+    ] }
+  ],
+  polls: [
+    { 
+      id: "poll-1", 
+      title: "Which museum should we visit?", 
+      createdBy: "user-1", 
+      creatorName: "Jane Smith",
+      deadline: "2023-04-15T23:59:59", 
+      options: [
+        { id: "opt-1", text: "Modern Art Museum", votes: ["user-1", "user-3"] },
+        { id: "opt-2", text: "Natural History Museum", votes: ["user-2"] },
+        { id: "opt-3", text: "Science Museum", votes: [] }
+      ]
+    },
+    { 
+      id: "poll-2", 
+      title: "Dinner preference for Saturday night?", 
+      createdBy: "user-2", 
+      creatorName: "Alex Rodriguez",
+      deadline: "2023-04-20T18:00:00", 
+      options: [
+        { id: "opt-1", text: "Italian Restaurant", votes: ["user-1", "user-2"] },
+        { id: "opt-2", text: "Local Cuisine", votes: ["user-3"] },
+        { id: "opt-3", text: "Seafood Place", votes: [] }
+      ]
+    }
+  ],
+  announcements: [
+    { 
+      id: "ann-1", 
+      title: "Hotel Booking Confirmed!", 
+      content: "I've received confirmation for our hotel booking. Check-in time is 3 PM on June 15th.", 
+      createdBy: "user-1", 
+      creatorName: "Jane Smith", 
+      timestamp: "2023-04-05T10:30:00", 
+      readBy: ["user-2", "user-3"] 
+    },
+    { 
+      id: "ann-2", 
+      title: "Train Schedule Change", 
+      content: "Our return train has been rescheduled to 5 PM instead of 3 PM. I've updated our itinerary accordingly.", 
+      createdBy: "user-2", 
+      creatorName: "Alex Rodriguez", 
+      timestamp: "2023-04-09T16:45:00", 
+      readBy: ["user-1"] 
+    }
+  ]
+};
+
+// Mock checklist data
+export const mockChecklistData = {
+  categories: [
+    { 
+      id: "cat-1", 
+      name: "Essentials", 
+      items: [
+        { id: "item-1", text: "Passport", assigned: "all", completed: ["user-1", "user-2"] },
+        { id: "item-2", text: "Travel insurance", assigned: "all", completed: ["user-1"] },
+        { id: "item-3", text: "Credit cards", assigned: "all", completed: ["user-1", "user-2", "user-3"] },
+        { id: "item-4", text: "Local currency", assigned: "all", completed: [] }
+      ] 
+    },
+    { 
+      id: "cat-2", 
+      name: "Clothing", 
+      items: [
+        { id: "item-5", text: "Walking shoes", assigned: "all", completed: ["user-3"] },
+        { id: "item-6", text: "Rain jacket", assigned: "all", completed: [] },
+        { id: "item-7", text: "Swimwear", assigned: "all", completed: ["user-1"] }
+      ] 
+    },
+    { 
+      id: "cat-3", 
+      name: "Electronics", 
+      items: [
+        { id: "item-8", text: "Phone charger", assigned: "all", completed: ["user-1", "user-2"] },
+        { id: "item-9", text: "Camera", assigned: "user-2", completed: [] },
+        { id: "item-10", text: "Power adapter", assigned: "user-1", completed: ["user-1"] }
+      ] 
+    }
+  ]
+};
+
+// Mock documents data
+export const mockDocumentData = {
+  files: [
+    { id: "file-1", name: "Hotel Reservation.pdf", type: "pdf", size: 1240000, uploadedBy: "user-1", uploaderName: "Jane Smith", timestamp: "2023-04-03T14:30:00", url: "#" },
+    { id: "file-2", name: "Train Tickets.pdf", type: "pdf", size: 580000, uploadedBy: "user-2", uploaderName: "Alex Rodriguez", timestamp: "2023-04-05T10:15:00", url: "#" },
+    { id: "file-3", name: "Museum Tour Confirmation.pdf", type: "pdf", size: 350000, uploadedBy: "user-1", uploaderName: "Jane Smith", timestamp: "2023-04-08T16:45:00", url: "#" },
+    { id: "file-4", name: "Trip Planning Notes.docx", type: "docx", size: 450000, uploadedBy: "user-3", uploaderName: "Taylor Moore", timestamp: "2023-04-02T09:30:00", url: "#" },
+    { id: "file-5", name: "Rome City Map.jpg", type: "jpg", size: 2340000, uploadedBy: "user-2", uploaderName: "Alex Rodriguez", timestamp: "2023-04-07T11:20:00", url: "#" },
+    { id: "file-6", name: "Restaurant Recommendations.xlsx", type: "xlsx", size: 320000, uploadedBy: "user-3", uploaderName: "Taylor Moore", timestamp: "2023-04-09T13:10:00", url: "#" }
+  ],
+  folders: [
+    { id: "folder-1", name: "Accommodations", files: ["file-1"] },
+    { id: "folder-2", name: "Transportation", files: ["file-2"] },
+    { id: "folder-3", name: "Activities", files: ["file-3"] },
+    { id: "folder-4", name: "Planning", files: ["file-4", "file-6"] },
+    { id: "folder-5", name: "Maps", files: ["file-5"] }
+  ]
+};
+
+// Mock travel info data
+export const mockTravelInfoData = {
+  weather: {
+    forecast: [
+      { date: "2025-06-15", condition: "Sunny", high: 28, low: 18, precipitation: 0 },
+      { date: "2025-06-16", condition: "Mostly Sunny", high: 27, low: 17, precipitation: 10 },
+      { date: "2025-06-17", condition: "Partly Cloudy", high: 25, low: 16, precipitation: 20 },
+      { date: "2025-06-18", condition: "Cloudy", high: 23, low: 15, precipitation: 30 },
+      { date: "2025-06-19", condition: "Rainy", high: 21, low: 14, precipitation: 80 },
+      { date: "2025-06-20", condition: "Partly Cloudy", high: 24, low: 16, precipitation: 20 },
+      { date: "2025-06-21", condition: "Sunny", high: 26, low: 17, precipitation: 0 }
+    ]
+  },
+  emergency: {
+    police: "112",
+    ambulance: "118",
+    tourist_police: "+39 06 4686",
+    embassy: "+39 06 46741",
+    hospital: "Ospedale Santo Spirito, Via Vittorio Emanuele II, 12"
+  },
+  currency: {
+    local: "EUR",
+    exchange_rate: 1.06, // 1 EUR = 1.06 USD
+    common_prices: [
+      { item: "Coffee", price: 1.5 },
+      { item: "Public Transport (Single Trip)", price: 1.5 },
+      { item: "Restaurant Meal (Average)", price: 20 },
+      { item: "Bottle of Water", price: 1 },
+      { item: "Museum Entrance", price: 15 }
+    ]
+  },
+  language: {
+    phrases: [
+      { english: "Hello", local: "Ciao" },
+      { english: "Thank you", local: "Grazie" },
+      { english: "Please", local: "Per favore" },
+      { english: "Excuse me", local: "Mi scusi" },
+      { english: "Where is...?", local: "Dov'è...?" },
+      { english: "How much?", local: "Quanto costa?" },
+      { english: "Help!", local: "Aiuto!" },
+      { english: "I don't understand", local: "Non capisco" }
+    ]
+  },
+  customs: [
+    { title: "Tipping", description: "Tipping is not expected but appreciated. Leaving 5-10% for good service is common." },
+    { title: "Greetings", description: "Italians typically greet with a handshake or 'kiss on both cheeks' among friends." },
+    { title: "Dining", description: "Dinner is usually eaten late, around 8-9 PM. Cappuccino is considered a morning drink only." },
+    { title: "Dress Code", description: "Dress modestly when visiting churches. Shoulders and knees should be covered." },
+    { title: "Siesta", description: "Many shops close for a few hours in the afternoon, typically 1-4 PM." }
+  ]
+};
+
 export default function TripDetail() {
   const { id } = useParams<{ id: string }>();
   const [trip, setTrip] = useState<TripProps | null>(null);
@@ -189,6 +394,12 @@ export default function TripDetail() {
   const [inviteMessage, setInviteMessage] = useState("");
   const [invitePermission, setInvitePermission] = useState("editor");
   const { toast } = useToast();
+  
+  // Budget state
+  const [budgetData, setBudgetData] = useState(mockBudgetData);
+  
+  // Communication state
+  const [chatData, setChatData] = useState(mockChatData);
   
   useEffect(() => {
     // Simulate API call
@@ -369,556 +580,4 @@ export default function TripDetail() {
           <div className="container relative z-10 h-full flex flex-col justify-end pb-6">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div>
-                <h1 className="font-heading text-3xl md:text-4xl font-bold text-white mb-2">
-                  {trip.name}
-                </h1>
-                <div className="flex flex-wrap items-center gap-4 text-white/90">
-                  <div className="flex items-center">
-                    <CalendarIcon className="mr-1.5 h-4 w-4" />
-                    <span>{formatDate(trip.startDate)} - {formatDate(trip.endDate)}</span>
-                  </div>
-                  <div className="flex items-center">
-                    <MapPin className="mr-1.5 h-4 w-4" />
-                    <span>{trip.location}</span>
-                  </div>
-                  <div className="flex items-center">
-                    <Users className="mr-1.5 h-4 w-4" />
-                    <span>{trip.participantCount} {trip.participantCount === 1 ? "Traveler" : "Travelers"}</span>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="flex gap-2">
-                <Dialog open={isInviteModalOpen} onOpenChange={setIsInviteModalOpen}>
-                  <DialogTrigger asChild>
-                    <Button variant="secondary" size="sm" className="bg-white/20 backdrop-blur-sm hover:bg-white/30">
-                      <UserPlus className="mr-2 h-4 w-4" />
-                      Invite
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="sm:max-w-md">
-                    <DialogHeader>
-                      <DialogTitle>Invite Travelers</DialogTitle>
-                      <DialogDescription>
-                        Send invitations to friends and family to join this trip.
-                      </DialogDescription>
-                    </DialogHeader>
-                    <div className="grid gap-4 py-4">
-                      <div className="grid gap-2">
-                        <label htmlFor="email" className="text-sm font-medium">
-                          Email address
-                        </label>
-                        <Input
-                          id="email"
-                          placeholder="name@example.com"
-                          type="email"
-                          value={inviteEmail}
-                          onChange={(e) => setInviteEmail(e.target.value)}
-                        />
-                      </div>
-                      <div className="grid gap-2">
-                        <label htmlFor="permission" className="text-sm font-medium">
-                          Permission level
-                        </label>
-                        <select 
-                          id="permission"
-                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                          value={invitePermission}
-                          onChange={(e) => setInvitePermission(e.target.value)}
-                        >
-                          <option value="editor">Editor (can add and edit activities)</option>
-                          <option value="viewer">Viewer (can only view trip details)</option>
-                        </select>
-                      </div>
-                      <div className="grid gap-2">
-                        <label htmlFor="message" className="text-sm font-medium">
-                          Custom message (optional)
-                        </label>
-                        <Textarea
-                          id="message"
-                          placeholder="Hey! Join me on this trip..."
-                          value={inviteMessage}
-                          onChange={(e) => setInviteMessage(e.target.value)}
-                        />
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <div className="grid flex-1 gap-2">
-                          <label htmlFor="code" className="text-sm font-medium">
-                            Or share trip code
-                          </label>
-                          <div className="flex">
-                            <Input
-                              id="code"
-                              value={shareCode}
-                              readOnly
-                              className="rounded-r-none font-mono"
-                            />
-                            <Button 
-                              onClick={handleCopyCode} 
-                              className="rounded-l-none"
-                              variant="secondary"
-                            >
-                              Copy
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <DialogFooter className="sm:justify-start">
-                      <Button type="button" onClick={handleInviteSubmit}>
-                        Send Invitation
-                      </Button>
-                    </DialogFooter>
-                  </DialogContent>
-                </Dialog>
-                <Button variant="secondary" size="sm" className="bg-white/20 backdrop-blur-sm hover:bg-white/30">
-                  <Settings className="mr-2 h-4 w-4" />
-                  Edit Trip
-                </Button>
-                <Button variant="secondary" size="sm" className="bg-white/20 backdrop-blur-sm hover:bg-white/30" onClick={handleCopyCode}>
-                  <Share2 className="mr-2 h-4 w-4" />
-                  Share
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <div className="container py-8">
-          {/* Shareable Code Banner */}
-          <div className="mb-8 bg-muted p-4 rounded-lg flex items-center justify-between">
-            <div className="flex items-center">
-              <div className="bg-background border rounded p-2 mr-4">
-                <span className="font-mono font-bold">{shareCode}</span>
-              </div>
-              <span className="text-sm text-muted-foreground">Share this code to invite others to your trip</span>
-            </div>
-            <Button size="sm" variant="outline" onClick={handleCopyCode}>Copy Code</Button>
-          </div>
-          
-          {/* Description */}
-          {trip.description && (
-            <p className="text-muted-foreground mb-8">{trip.description}</p>
-          )}
-          
-          {/* Active Participants Indicator */}
-          <div className="mb-6 flex items-center gap-2">
-            <span className="text-sm text-muted-foreground mr-2">Currently viewing:</span>
-            <div className="flex -space-x-2">
-              {participants
-                .filter(p => activeParticipants.includes(p.id))
-                .map(participant => (
-                  <div 
-                    key={participant.id}
-                    className="h-8 w-8 rounded-full bg-primary/10 border-2 border-background flex items-center justify-center text-xs font-medium"
-                    title={participant.name}
-                  >
-                    {participant.avatar}
-                  </div>
-                ))
-              }
-            </div>
-            <span className="text-xs text-muted-foreground">
-              {activeParticipants.length} active
-            </span>
-          </div>
-          
-          {/* Tab Navigation */}
-          <Tabs defaultValue="itinerary" className="space-y-8">
-            <TabsList className="w-full sm:w-auto">
-              <TabsTrigger value="itinerary" className="flex-1 sm:flex-none">
-                <ClipboardCheck className="h-4 w-4 mr-2" />
-                Itinerary
-              </TabsTrigger>
-              <TabsTrigger value="participants" className="flex-1 sm:flex-none">
-                <Users className="h-4 w-4 mr-2" />
-                Participants
-              </TabsTrigger>
-              <TabsTrigger value="budget" className="flex-1 sm:flex-none">
-                <DollarSign className="h-4 w-4 mr-2" />
-                Budget
-              </TabsTrigger>
-              <TabsTrigger value="chat" className="flex-1 sm:flex-none">
-                <MessageCircle className="h-4 w-4 mr-2" />
-                Chat
-              </TabsTrigger>
-            </TabsList>
-            
-            {/* Itinerary Tab */}
-            <TabsContent value="itinerary">
-              <div className="border rounded-lg p-6 bg-card">
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="font-heading text-xl font-semibold">Trip Itinerary</h2>
-                  <Dialog open={isActivityModalOpen} onOpenChange={setIsActivityModalOpen}>
-                    <DialogTrigger asChild>
-                      <Button>
-                        <Plus className="mr-2 h-4 w-4" />
-                        Add Activity
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="sm:max-w-md">
-                      <DialogHeader>
-                        <DialogTitle>Create New Activity</DialogTitle>
-                        <DialogDescription>
-                          Add details about the activity you want to plan.
-                        </DialogDescription>
-                      </DialogHeader>
-                      <div className="grid gap-4 py-4">
-                        <div className="grid gap-2">
-                          <label htmlFor="title" className="text-sm font-medium">
-                            Activity Title
-                          </label>
-                          <Input id="title" placeholder="e.g. Visit the Eiffel Tower" />
-                        </div>
-                        
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="grid gap-2">
-                            <label htmlFor="date" className="text-sm font-medium">
-                              Date
-                            </label>
-                            <Popover>
-                              <PopoverTrigger asChild>
-                                <Button
-                                  variant="outline"
-                                  className="w-full justify-start text-left font-normal"
-                                >
-                                  <CalendarIcon className="mr-2 h-4 w-4" />
-                                  <span>Pick a date</span>
-                                </Button>
-                              </PopoverTrigger>
-                              <PopoverContent className="w-auto p-0">
-                                <Calendar className="pointer-events-auto" />
-                              </PopoverContent>
-                            </Popover>
-                          </div>
-                          <div className="grid gap-2">
-                            <label htmlFor="time" className="text-sm font-medium">
-                              Start Time
-                            </label>
-                            <Input
-                              id="time"
-                              type="time"
-                              defaultValue="09:00"
-                            />
-                          </div>
-                        </div>
-                        
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="grid gap-2">
-                            <label htmlFor="duration" className="text-sm font-medium">
-                              Duration
-                            </label>
-                            <div className="flex items-center">
-                              <Input
-                                id="duration"
-                                type="number"
-                                min="1"
-                                defaultValue="2"
-                              />
-                              <span className="ml-2 text-sm">hours</span>
-                            </div>
-                          </div>
-                          <div className="grid gap-2">
-                            <label htmlFor="category" className="text-sm font-medium">
-                              Category
-                            </label>
-                            <select 
-                              id="category"
-                              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                            >
-                              {activityCategories.map(category => (
-                                <option key={category.id} value={category.id}>
-                                  {category.name}
-                                </option>
-                              ))}
-                            </select>
-                          </div>
-                        </div>
-                        
-                        <div className="grid gap-2">
-                          <label htmlFor="location" className="text-sm font-medium">
-                            Location
-                          </label>
-                          <Input id="location" placeholder="Address or place name" />
-                        </div>
-                        
-                        <div className="grid gap-2">
-                          <label htmlFor="cost" className="text-sm font-medium">
-                            Cost per person (optional)
-                          </label>
-                          <div className="relative">
-                            <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                            <Input id="cost" type="number" min="0" step="0.01" className="pl-9" />
-                          </div>
-                        </div>
-                        
-                        <div className="grid gap-2">
-                          <label htmlFor="notes" className="text-sm font-medium">
-                            Notes (optional)
-                          </label>
-                          <Textarea
-                            id="notes"
-                            placeholder="Add any additional details..."
-                          />
-                        </div>
-                      </div>
-                      <DialogFooter>
-                        <Button type="button" onClick={() => setIsActivityModalOpen(false)}>
-                          Add Activity
-                        </Button>
-                      </DialogFooter>
-                    </DialogContent>
-                  </Dialog>
-                </div>
-                
-                {/* Day Selector */}
-                <div className="flex overflow-x-auto pb-4 mb-6 gap-2 no-scrollbar">
-                  {getTripDays().map((day, index) => (
-                    <Button
-                      key={day}
-                      variant={day === selectedDay ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setSelectedDay(day)}
-                      className="whitespace-nowrap"
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      Day {index + 1} ({new Date(day).toLocaleDateString("en-US", { month: "short", day: "numeric" })})
-                    </Button>
-                  ))}
-                </div>
-                
-                {/* Activities Timeline */}
-                <div className="space-y-6">
-                  {selectedDay && (
-                    <div className="relative">
-                      <div className="absolute left-5 top-0 bottom-0 w-0.5 bg-muted-foreground/20"></div>
-                      
-                      {getDayActivities(selectedDay).length > 0 ? (
-                        getDayActivities(selectedDay).map((activity, index) => (
-                          <div 
-                            key={activity.id} 
-                            className="relative pl-12 pb-6 group animate-fade-in"
-                            style={{ animationDelay: `${index * 100}ms` }}
-                          >
-                            <div className="absolute left-2 top-1 h-6 w-6 rounded-full flex items-center justify-center bg-white border border-primary">
-                              <span className="text-xs font-bold">{index + 1}</span>
-                            </div>
-                            
-                            <div className="border rounded-lg overflow-hidden transition-all duration-300 hover:shadow-md group-hover:border-primary/40">
-                              <div className={`px-4 py-3 flex justify-between items-center ${activityCategories.find(c => c.id === activity.category)?.color} bg-opacity-10`}>
-                                <div className="flex items-center">
-                                  <span className="font-medium text-base">{activity.title}</span>
-                                  {activity.status === "confirmed" && (
-                                    <Badge className="ml-2" variant="outline">Confirmed</Badge>
-                                  )}
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={() => handleConfirmActivity(activity.id)}>
-                                    <ClipboardCheck className="h-4 w-4" />
-                                    <span className="sr-only">Toggle confirmation</span>
-                                  </Button>
-                                  <Button size="sm" variant="ghost" className="h-8 w-8 p-0">
-                                    <Edit className="h-4 w-4" />
-                                    <span className="sr-only">Edit</span>
-                                  </Button>
-                                  <Button 
-                                    size="sm" 
-                                    variant="ghost" 
-                                    className="h-8 w-8 p-0 text-destructive" 
-                                    onClick={() => handleDeleteActivity(activity.id)}
-                                  >
-                                    <Trash2 className="h-4 w-4" />
-                                    <span className="sr-only">Delete</span>
-                                  </Button>
-                                </div>
-                              </div>
-                              
-                              <div className="p-4">
-                                <div className="flex flex-col lg:flex-row lg:items-center mb-4 gap-y-2 gap-x-6">
-                                  <div className="flex items-center text-sm text-muted-foreground">
-                                    <Clock className="mr-1.5 h-3.5 w-3.5" />
-                                    <span>{activity.startTime} - {activity.endTime} ({activity.duration})</span>
-                                  </div>
-                                  <div className="flex items-center text-sm text-muted-foreground">
-                                    <MapPin className="mr-1.5 h-3.5 w-3.5" />
-                                    <span>{activity.location}</span>
-                                  </div>
-                                  {activity.cost > 0 && (
-                                    <div className="flex items-center text-sm text-muted-foreground">
-                                      <DollarSign className="mr-1.5 h-3.5 w-3.5" />
-                                      <span>${activity.cost} per person</span>
-                                    </div>
-                                  )}
-                                </div>
-                                
-                                {activity.notes && (
-                                  <p className="text-sm text-muted-foreground mb-4">{activity.notes}</p>
-                                )}
-                                
-                                {activity.images && activity.images.length > 0 && (
-                                  <div className="mb-4">
-                                    <img 
-                                      src={activity.images[0]} 
-                                      alt={activity.title} 
-                                      className="w-full h-48 object-cover rounded-md"
-                                    />
-                                  </div>
-                                )}
-                                
-                                <div className="flex items-center justify-between">
-                                  <div className="text-xs text-muted-foreground">
-                                    Added by {activity.creatorName}
-                                  </div>
-                                  
-                                  <div className="flex items-center gap-2">
-                                    <Button 
-                                      size="sm" 
-                                      variant="outline" 
-                                      className="flex gap-1.5"
-                                      onClick={() => handleActivityVote(activity.id, 'up')}
-                                    >
-                                      <ThumbsUp className="h-3.5 w-3.5" />
-                                      <span>{activity.upvotes}</span>
-                                    </Button>
-                                    <Button 
-                                      size="sm" 
-                                      variant="outline" 
-                                      className="flex gap-1.5"
-                                      onClick={() => handleActivityVote(activity.id, 'down')}
-                                    >
-                                      <ThumbsDown className="h-3.5 w-3.5" />
-                                      <span>{activity.downvotes}</span>
-                                    </Button>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        ))
-                      ) : (
-                        <div className="text-center py-12">
-                          <div className="bg-muted inline-flex items-center justify-center p-4 rounded-full mb-4">
-                            <CalendarIcon className="h-6 w-6 text-muted-foreground" />
-                          </div>
-                          <h3 className="text-lg font-medium mb-2">No Activities Yet</h3>
-                          <p className="text-muted-foreground max-w-md mx-auto mb-6">
-                            There are no activities planned for this day. Click the button below to add your first activity.
-                          </p>
-                          <Button onClick={() => setIsActivityModalOpen(true)}>
-                            <Plus className="mr-2 h-4 w-4" />
-                            Add Activity
-                          </Button>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </TabsContent>
-            
-            {/* Participants Tab */}
-            <TabsContent value="participants">
-              <div className="border rounded-lg p-6 bg-card">
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="font-heading text-xl font-semibold">Trip Participants</h2>
-                  <Button onClick={() => setIsInviteModalOpen(true)}>
-                    <UserPlus className="mr-2 h-4 w-4" />
-                    Invite People
-                  </Button>
-                </div>
-                
-                <div className="grid grid-cols-1 gap-4">
-                  {participants.map(participant => (
-                    <div
-                      key={participant.id}
-                      className="flex items-center justify-between p-4 border rounded-lg"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-sm font-medium">
-                          {participant.avatar}
-                        </div>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <span className="font-medium">{participant.name}</span>
-                            {participant.isCreator && (
-                              <Badge variant="outline" className="text-xs">Creator</Badge>
-                            )}
-                            {participant.isActive ? (
-                              <span className="flex items-center">
-                                <span className="h-2 w-2 bg-green-500 rounded-full mr-1.5"></span>
-                                <span className="text-xs text-muted-foreground">Active now</span>
-                              </span>
-                            ) : (
-                              <span className="flex items-center">
-                                <span className="h-2 w-2 bg-gray-300 rounded-full mr-1.5"></span>
-                                <span className="text-xs text-muted-foreground">Offline</span>
-                              </span>
-                            )}
-                          </div>
-                          <div className="text-sm text-muted-foreground">{participant.email}</div>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-4">
-                        <div className="text-sm text-muted-foreground">
-                          <span className="font-medium">{participant.contributionCount}</span> contributions
-                        </div>
-                        {!participant.isCreator && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleRemoveParticipant(participant.id)}
-                            className="text-destructive hover:text-destructive"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                            <span className="sr-only">Remove</span>
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </TabsContent>
-            
-            {/* Budget Tab Placeholder */}
-            <TabsContent value="budget">
-              <div className="border rounded-lg p-6 bg-card">
-                <h2 className="font-heading text-xl font-semibold mb-6">Trip Budget</h2>
-                <div className="text-center p-12 text-muted-foreground">
-                  <DollarSign className="h-12 w-12 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium mb-2">Budget Tracking Coming Soon</h3>
-                  <p className="max-w-md mx-auto">
-                    Track shared expenses, split costs between participants, and keep your trip on budget with our upcoming budget tracking feature.
-                  </p>
-                </div>
-              </div>
-            </TabsContent>
-            
-            {/* Chat Tab Placeholder */}
-            <TabsContent value="chat">
-              <div className="border rounded-lg p-6 bg-card h-[400px] flex flex-col">
-                <h2 className="font-heading text-xl font-semibold mb-6">Trip Chat</h2>
-                
-                <div className="flex-1 overflow-y-auto mb-4 flex flex-col items-center justify-center text-center">
-                  <MessageCircle className="h-12 w-12 text-muted-foreground mb-4" />
-                  <h3 className="text-lg font-medium mb-2">Chat Coming Soon</h3>
-                  <p className="text-muted-foreground max-w-md">
-                    Stay connected with your travel companions and discuss trip details in real-time with our upcoming chat feature.
-                  </p>
-                </div>
-                
-                <div className="flex gap-2">
-                  <Input placeholder="Type your message..." disabled />
-                  <Button disabled>
-                    <Send className="h-4 w-4 mr-2" />
-                    Send
-                  </Button>
-                </div>
-              </div>
-            </TabsContent>
-          </Tabs>
-        </div>
-      </div>
-    </PageTransition>
-  );
-}
+                <h1 className="font-heading text-3xl md:text-4xl font-bold text-
