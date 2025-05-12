@@ -863,7 +863,7 @@ export default function TripDetail() {
             <TabsContent value="checklist" className="space-y-6">
               <ChecklistManager 
                 checklistData={mockChecklistData} 
-                participants={participants} 
+                participants={mockParticipants} 
                 currentUser={currentUserId}
                 className="space-y-6"
               />
