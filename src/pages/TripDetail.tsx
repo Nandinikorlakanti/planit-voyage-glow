@@ -130,7 +130,7 @@ const mockActivities = [
     location: "Piazza del Colosseo, Rome",
     cost: 16,
     notes: "Remember to book tickets in advance to skip the line.",
-    images: ["https://images.unsplash.com/photo-1552832230-c0197dd311b5?q=80&w=1600&auto=format&fit=crop"],
+    images: ["https://images.unsplash.com/photo-1516483638261-f4dbaf036963?q=80&w=1200&auto=format&fit=crop"],
     createdBy: "user-1",
     creatorName: "Jane Smith",
     upvotes: 3,
