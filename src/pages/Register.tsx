@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Eye, EyeOff, Upload } from "lucide-react";
 import { PageTransition } from "@/components/layout/PageTransition";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function Register() {
   const [email, setEmail] = useState("");
@@ -20,6 +21,7 @@ export default function Register() {
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   // Password validation
   const hasMinLength = password.length >= 8;
@@ -58,15 +60,76 @@ export default function Register() {
     
     setIsLoading(true);
     
-    // Simulate registration delay
-    setTimeout(() => {
+    try {
+      // Register the user with Supabase
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            username,
+            full_name: "", // We could add full name fields to the form if needed
+          },
+        },
+      });
+      
+      if (error) throw error;
+      
+      // If avatar was uploaded, store it in Supabase Storage
+      if (data?.user && avatar) {
+        const fileExt = avatar.name.split('.').pop();
+        const fileName = `${data.user.id}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+        
+        const { error: uploadError } = await supabase
+          .storage
+          .from('avatars')
+          .upload(fileName, avatar);
+          
+        if (uploadError) {
+          console.error("Error uploading avatar:", uploadError);
+          toast({
+            variant: "destructive",
+            title: "Avatar upload failed",
+            description: "Your account was created, but we couldn't upload your profile picture.",
+          });
+        } else {
+          // Get the public URL for the uploaded avatar
+          const { data: publicUrlData } = supabase
+            .storage
+            .from('avatars')
+            .getPublicUrl(fileName);
+          
+          // Update the user profile with avatar URL if needed
+          if (publicUrlData.publicUrl) {
+            const { error: profileError } = await supabase
+              .from('users')
+              .update({ avatar_url: publicUrlData.publicUrl })
+              .eq('id', data.user.id);
+              
+            if (profileError) {
+              console.error("Error updating profile with avatar:", profileError);
+            }
+          }
+        }
+      }
+      
       toast({
         title: "Registration successful!",
         description: "Welcome to Planit. You can now log in.",
       });
+      
+      // Redirect to login page
+      navigate("/login");
+    } catch (error: any) {
+      console.error("Registration error:", error);
+      toast({
+        variant: "destructive",
+        title: "Registration failed",
+        description: error.message || "An unexpected error occurred. Please try again.",
+      });
+    } finally {
       setIsLoading(false);
-      // Redirect would happen here in a real app
-    }, 1500);
+    }
   };
 
   return (
